@@ -1,22 +1,30 @@
-const express = require("express");
-const Producto = require("../models/Producto");
-
+const express = require('express');
 const router = express.Router();
+const db = require('../app'); // Importamos la conexión
 
-router.get("/", async (req, res) => {
-  const productos = await Producto.find();
-  res.json(productos);
+// Obtener todos los productos
+router.get('/', (req, res) => {
+  db.query('SELECT * FROM productos', (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results);
+  });
 });
 
-router.post("/", async (req, res) => {
-  const nuevoProducto = new Producto(req.body);
-  await nuevoProducto.save();
-  res.json({ status: "Producto guardado" });
-});
-
-router.delete("/:id", async (req, res) => {
-  await Producto.findByIdAndDelete(req.params.id);
-  res.json({ status: "Producto eliminado" });
+// Crear un nuevo producto
+router.post('/', (req, res) => {
+  const { nombre, precio } = req.body;
+  db.query(
+    'INSERT INTO productos (nombre, precio) VALUES (?, ?)',
+    [nombre, precio],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.status(201).json({ id: results.insertId, nombre, precio });
+    }
+  );
 });
 
 module.exports = router;
