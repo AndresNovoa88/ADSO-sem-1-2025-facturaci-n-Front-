@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../app'); // Importamos la conexión
+const db = require('../server'); // Importamos la conexión
 
 // Obtener todos los productos
 router.get('/', (req, res) => {
