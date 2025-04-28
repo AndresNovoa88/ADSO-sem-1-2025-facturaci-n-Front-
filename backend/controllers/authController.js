@@ -1,12 +1,15 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { secret } = require('../config/config');
+const { User } = require('../models/User');
+const { JWT_SECRET } = process.env;
 
 exports.register = async (req, res) => {
   try {
-    const { username, password, email, rol_id } = req.body;
-    const user = await User.create({ username, password, email, rol_id });
-    res.status(201).json({ message: 'Usuario registrado exitosamente' });
+    const user = await User.create(req.body);
+    res.status(201).json({
+      id: user.id,
+      username: user.username,
+      email: user.email
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -14,27 +17,20 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({ where: { username: req.body.username } });
     
-    if (!user) {
+    if (!user || !(await user.validPassword(req.body.password))) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
-    
-    const isValid = await user.validPassword(password);
-    
-    if (!isValid) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
-    }
-    
+
     const token = jwt.sign(
-      { id: user.id, username: user.username, rol_id: user.rol_id },
-      secret,
+      { id: user.id, rol_id: user.rol_id },
+      JWT_SECRET,
       { expiresIn: '8h' }
     );
-    
-    res.json({ token, user: { id: user.id, username: user.username, rol_id: user.rol_id } });
+
+    res.json({ token });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
