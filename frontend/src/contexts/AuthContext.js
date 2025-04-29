@@ -1,7 +1,7 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { login as apiLogin, logout as apiLogout, getProfile } from '../api/auth';
+import { login as apiLogin, getProfile } from '../api/auth';
 import { setAuthToken, removeAuthToken } from '../utils/auth';
 
 export const AuthContext = createContext();
@@ -11,26 +11,28 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          setAuthToken(token);
-          const userData = await getProfile();
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error('Error loading user', error);
-        logout();
-      } finally {
-        setLoading(false);
+  // Cargar usuario al iniciar
+  const loadUser = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        setAuthToken(token);
+        const userData = await getProfile();
+        setUser(userData);
       }
-    };
-    
-    loadUser();
+    } catch (error) {
+      console.error('Error loading user', error);
+      logout();
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  // Login optimizado
   const login = async (username, password) => {
     try {
       const { token, user } = await apiLogin(username, password);
@@ -40,21 +42,23 @@ export const AuthProvider = ({ children }) => {
       message.success('Bienvenido');
       return user;
     } catch (error) {
-      message.error('Credenciales incorrectas');
+      message.error(error.response?.data?.message || 'Credenciales incorrectas');
       throw error;
     }
   };
 
-  const logout = () => {
+  // Logout mejorado
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     removeAuthToken();
     setUser(null);
     message.success('Sesión cerrada');
     navigate('/login');
-  };
+  }, [navigate]);
 
+  // Actualizar usuario
   const updateUser = (newUserData) => {
-    setUser({ ...user, ...newUserData });
+    setUser(prev => ({ ...prev, ...newUserData }));
   };
 
   return (
@@ -66,9 +70,11 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateUser,
         isAuthenticated: !!user,
-        isAdmin: user?.rol_id === 1,
-        isGerente: user?.rol_id === 2,
-        isVendedor: user?.rol_id === 3
+        roles: {
+          isAdmin: user?.rol_id === 1,
+          isGerente: user?.rol_id === 2,
+          isVendedor: user?.rol_id === 3
+        }
       }}
     >
       {children}

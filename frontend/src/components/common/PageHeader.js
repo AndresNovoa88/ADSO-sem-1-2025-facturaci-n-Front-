@@ -1,13 +1,18 @@
-import { PageHeader } from 'antd';
+// src/components/common/PageHeader.js
+import { Breadcrumb, Typography, Space } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 
 const CustomPageHeader = ({ title, onBack, extra }) => {
   return (
-    <PageHeader
-      title={title}
-      onBack={onBack}
-      extra={extra}
-      style={{ background: '#fff', marginBottom: 24 }}
-    />
+    <div style={{ background: '#fff', padding: '16px 24px', marginBottom: 24 }}>
+      <Space size="middle" align="center">
+        {onBack && <ArrowLeftOutlined onClick={onBack} style={{ cursor: 'pointer' }} />}
+        <Typography.Title level={4} style={{ margin: 0 }}>
+          {title}
+        </Typography.Title>
+      </Space>
+      {extra && <div style={{ float: 'right' }}>{extra}</div>}
+    </div>
   );
 };
 

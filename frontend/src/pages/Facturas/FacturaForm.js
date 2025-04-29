@@ -1,20 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Form, Input, Button, Card, Select, DatePicker, 
-  Table, Space, Typography, Row, Col, InputNumber, 
-  message, AutoComplete, Divider, Modal 
-} from 'antd';
-import { 
-  PlusOutlined, DeleteOutlined, SearchOutlined, 
-  UserOutlined, ShoppingCartOutlined 
-} from '@ant-design/icons';
-import moment from 'moment';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  fetchFacturaById, createFactura, updateFactura,
-  fetchClientes, fetchVendedores, fetchProductos 
-} from '../../api/facturas';
-import PageHeader from '../../../components/common/PageHeader';
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Card,
+  Select,
+  DatePicker,
+  Table,
+  Space,
+  Typography,
+  Row,
+  Col,
+  InputNumber,
+  message,
+  AutoComplete,
+  Divider,
+  Spin,
+  Tag,
+} from "antd";
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  ShoppingCartOutlined,
+  SaveOutlined,
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
+import moment from "moment";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  fetchFacturaById,
+  createFactura,
+  updateFactura,
+  fetchClientes,
+  fetchVendedores,
+  fetchProductos,
+} from "../../api/facturas";
+import PageHeader from "../../components/common/PageHeader";
+import { useDebounce } from "../../hooks/useDebounce";
+import "./FacturaForm.css"; // Estilos personalizados
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -26,99 +50,117 @@ const FacturaForm = () => {
   const [clientes, setClientes] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [items, setItems] = useState([]);
-  const [productoSearch, setProductoSearch] = useState('');
+  const [productoSearch, setProductoSearch] = useState("");
   const [productoOptions, setProductoOptions] = useState([]);
-  const [clienteSearch, setClienteSearch] = useState('');
-  const [clienteOptions, setClienteOptions] = useState([]);
-  const [subtotal, setSubtotal] = useState(0);
-  const [impuesto, setImpuesto] = useState(0);
-  const [total, setTotal] = useState(0);
+  const [searchLoading, setSearchLoading] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
 
+  // Cargar datos iniciales
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
-        
-        // Cargar clientes y vendedores
+
         const [clientesRes, vendedoresRes] = await Promise.all([
-          fetchClientes(),
-          fetchVendedores()
+          fetchClientes().catch(() => ({ data: [] })),
+          fetchVendedores().catch(() => ({ data: [] })),
         ]);
-        
+
         setClientes(clientesRes.data);
         setVendedores(vendedoresRes.data);
-        
-        // Si es edición, cargar factura existente
+
         if (isEdit) {
           const facturaRes = await fetchFacturaById(id);
+          if (!facturaRes) {
+            message.error("Factura no encontrada");
+            navigate("/facturas");
+            return;
+          }
+
           form.setFieldsValue({
             ...facturaRes,
             fecha: moment(facturaRes.fecha),
             cliente_id: facturaRes.cliente.id,
-            vendedor_id: facturaRes.vendedor.id
+            vendedor_id: facturaRes.vendedor.id,
           });
-          setItems(facturaRes.detalles.map(d => ({
-            ...d,
-            producto: d.producto
-          })));
-          calculateTotals(facturaRes.detalles);
+
+          setItems(
+            facturaRes.detalles.map((d) => ({
+              ...d,
+              producto: d.producto,
+              key: d.producto.id,
+            }))
+          );
         }
       } catch (error) {
-        message.error('Error al cargar datos iniciales');
+        message.error("Error al cargar datos: " + error.message);
       } finally {
         setLoading(false);
       }
     };
-    
-    loadInitialData();
-  }, [id, form, isEdit]);
 
+    loadInitialData();
+  }, [id, form, isEdit, navigate]);
+
+  // Búsqueda con debounce
+  const debouncedSearch = useDebounce(async (value) => {
+    if (value.length < 3) {
+      setProductoOptions([]);
+      return;
+    }
+
+    try {
+      setSearchLoading(true);
+      const response = await fetchProductos({ search: value });
+      setProductoOptions(
+        response.data.map((p) => ({
+          value: p.id,
+          label: `${p.codigo} - ${p.nombre} ($${p.precio.toLocaleString()})`,
+          producto: p,
+        }))
+      );
+    } catch (error) {
+      message.error("Error buscando productos");
+    } finally {
+      setSearchLoading(false);
+    }
+  }, 500);
+
+  // Calcular totales
+  const calculateTotals = useCallback(
+    (items) => {
+      const subtotal = items.reduce(
+        (sum, item) => sum + item.precio_unitario * item.cantidad,
+        0
+      );
+      const impuesto = subtotal * 0.19; // 19% IVA
+      const total = subtotal + impuesto;
+
+      form.setFieldsValue({ subtotal, impuesto, total });
+    },
+    [form]
+  );
+
+  // Efecto para calcular totales cuando cambian los items
   useEffect(() => {
     calculateTotals(items);
-  }, [items]);
+  }, [items, calculateTotals]);
 
-  const calculateTotals = (items) => {
-    const newSubtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
-    const newImpuesto = newSubtotal * 0.19; // 19% IVA
-    const newTotal = newSubtotal + newImpuesto;
-    
-    setSubtotal(newSubtotal);
-    setImpuesto(newImpuesto);
-    setTotal(newTotal);
-  };
+  // Manejar agregar producto
+  const handleAddItem = (value, option) => {
+    const producto = option.producto;
+    const existingIndex = items.findIndex(
+      (item) => item.producto_id === producto.id
+    );
 
-  const handleSearchProducto = async (value) => {
-    setProductoSearch(value);
-    if (value.length > 2) {
-      try {
-        const response = await fetchProductos({ search: value });
-        setProductoOptions(response.data.map(p => ({
-          value: p.nombre,
-          label: `${p.nombre} - $${p.precio.toLocaleString('es-CO')}`,
-          producto: p
-        })));
-      } catch (error) {
-        message.error('Error al buscar productos');
-      }
-    }
-  };
-
-  const handleAddItem = (producto) => {
-    const existingItem = items.find(item => item.producto_id === producto.id);
-    
-    if (existingItem) {
-      setItems(items.map(item => 
-        item.producto_id === producto.id 
-          ? { 
-              ...item, 
-              cantidad: item.cantidad + 1,
-              subtotal: (item.cantidad + 1) * item.precio_unitario
-            } 
-          : item
-      ));
+    if (existingIndex >= 0) {
+      const newItems = [...items];
+      newItems[existingIndex].cantidad += 1;
+      newItems[existingIndex].subtotal =
+        newItems[existingIndex].cantidad * producto.precio;
+      setItems(newItems);
     } else {
       setItems([
         ...items,
@@ -127,130 +169,150 @@ const FacturaForm = () => {
           producto,
           cantidad: 1,
           precio_unitario: producto.precio,
-          subtotal: producto.precio
-        }
+          subtotal: producto.precio,
+          key: producto.id,
+        },
       ]);
     }
-    
-    setProductoSearch('');
+
+    setProductoSearch("");
     setProductoOptions([]);
   };
 
-  const handleRemoveItem = (productoId) => {
-    setItems(items.filter(item => item.producto_id !== productoId));
-  };
-
-  const handleUpdateQuantity = (productoId, cantidad) => {
-    if (cantidad <= 0) {
+  // Manejar cambio de cantidad
+  const handleQuantityChange = (productoId, value) => {
+    if (value <= 0) {
       handleRemoveItem(productoId);
       return;
     }
-    
-    setItems(items.map(item => 
-      item.producto_id === productoId 
-        ? { 
-            ...item, 
-            cantidad,
-            subtotal: cantidad * item.precio_unitario
-          } 
-        : item
-    ));
+
+    setItems(
+      items.map((item) =>
+        item.producto_id === productoId
+          ? {
+              ...item,
+              cantidad: value,
+              subtotal: value * item.precio_unitario,
+            }
+          : item
+      )
+    );
   };
 
+  // Eliminar producto
+  const handleRemoveItem = (productoId) => {
+    setItems(items.filter((item) => item.producto_id !== productoId));
+  };
+
+  // Enviar formulario
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
-      
+      await form.validateFields();
+
+      if (items.length === 0) {
+        throw new Error("Debe agregar al menos un producto");
+      }
+
+      const values = await form.getFieldsValue();
       const facturaData = {
         ...values,
-        fecha: values.fecha.toISOString(),
-        subtotal,
-        impuesto,
-        total,
-        detalles: items.map(item => ({
+        fecha: values.fecha.format("YYYY-MM-DD"),
+        detalles: items.map((item) => ({
           producto_id: item.producto_id,
           cantidad: item.cantidad,
           precio_unitario: item.precio_unitario,
-          subtotal: item.subtotal
-        }))
+        })),
       };
-      
+
       setLoading(true);
-      
+
       if (isEdit) {
         await updateFactura(id, facturaData);
-        message.success('Factura actualizada correctamente');
+        message.success("Factura actualizada exitosamente");
       } else {
         await createFactura(facturaData);
-        message.success('Factura creada correctamente');
+        message.success("Factura creada exitosamente");
       }
-      
-      navigate('/facturas');
+
+      navigate("/facturas");
     } catch (error) {
-      if (items.length === 0) {
-        message.error('Debe agregar al menos un producto');
-      } else {
-        message.error('Error al guardar la factura');
-      }
+      message.error(error.message || "Error al guardar la factura");
     } finally {
       setLoading(false);
     }
   };
 
+  // Columnas de la tabla
   const columns = [
     {
-      title: 'Producto',
-      dataIndex: 'producto',
-      key: 'producto',
-      render: (producto) => producto.nombre,
+      title: "Producto",
+      dataIndex: ["producto", "nombre"],
+      key: "nombre",
+      width: "35%",
     },
     {
-      title: 'Precio Unitario',
-      dataIndex: 'precio_unitario',
-      key: 'precio_unitario',
-      render: (precio) => `$${precio.toLocaleString('es-CO')}`,
-      align: 'right',
+      title: "Precio Unit.",
+      dataIndex: "precio_unitario",
+      key: "precio",
+      render: (precio) => `$${precio.toLocaleString()}`,
+      align: "right",
+      width: "20%",
     },
     {
-      title: 'Cantidad',
-      dataIndex: 'cantidad',
-      key: 'cantidad',
+      title: "Cantidad",
+      dataIndex: "cantidad",
+      key: "cantidad",
       render: (cantidad, record) => (
         <InputNumber
           min={1}
           value={cantidad}
-          onChange={(value) => handleUpdateQuantity(record.producto_id, value)}
+          onChange={(value) => handleQuantityChange(record.producto_id, value)}
+          style={{ width: "80px" }}
         />
       ),
-      align: 'center',
+      align: "center",
+      width: "20%",
     },
     {
-      title: 'Subtotal',
-      dataIndex: 'subtotal',
-      key: 'subtotal',
-      render: (subtotal) => `$${subtotal.toLocaleString('es-CO')}`,
-      align: 'right',
+      title: "Subtotal",
+      dataIndex: "subtotal",
+      key: "subtotal",
+      render: (subtotal) => `$${subtotal.toLocaleString()}`,
+      align: "right",
+      width: "20%",
     },
     {
-      title: 'Acción',
-      key: 'action',
+      title: "Acciones",
+      key: "actions",
       render: (_, record) => (
-        <Button 
-          type="text" 
-          danger 
-          icon={<DeleteOutlined />} 
+        <Button
+          danger
+          type="text"
+          icon={<DeleteOutlined />}
           onClick={() => handleRemoveItem(record.producto_id)}
         />
       ),
-      align: 'center',
+      align: "center",
+      width: "5%",
     },
   ];
 
   return (
-    <div className="factura-form-container">
+    <Spin spinning={loading}>
       <PageHeader
-        title={isEdit ? 'Editar Factura' : 'Nueva Factura'}
-        onBack={() => navigate('/facturas')}
+        title={isEdit ? "Editar Factura" : "Nueva Factura"}
+        onBack={() => navigate("/facturas")}
+        extra={[
+          <Button
+            key="save"
+            type="primary"
+            icon={<SaveOutlined />}
+            onClick={handleSubmit}
+            loading={loading}
+          >
+            Guardar
+          </Button>,
+        ]}
       />
 
       <Form
@@ -258,36 +320,44 @@ const FacturaForm = () => {
         layout="vertical"
         initialValues={{
           fecha: moment(),
-          estado: 'PENDIENTE'
+          estado: "PENDIENTE",
         }}
       >
         <Row gutter={24}>
-          <Col span={24} lg={16}>
-            <Card title="Información Básica" style={{ marginBottom: 24 }}>
+          <Col xs={24} lg={16}>
+            <Card title="Información Básica" className="factura-card">
               <Row gutter={16}>
-                <Col span={24} md={8}>
+                <Col xs={24} md={8}>
                   <Form.Item
                     name="fecha"
                     label="Fecha"
-                    rules={[{ required: true, message: 'Seleccione la fecha' }]}
+                    rules={[{ required: true }]}
                   >
-                    <DatePicker style={{ width: '100%' }} />
+                    <DatePicker
+                      format="DD/MM/YYYY"
+                      style={{ width: "100%" }}
+                      disabledDate={(current) => current > moment()}
+                    />
                   </Form.Item>
                 </Col>
-                <Col span={24} md={8}>
+
+                <Col xs={24} md={8}>
                   <Form.Item
                     name="cliente_id"
                     label="Cliente"
-                    rules={[{ required: true, message: 'Seleccione el cliente' }]}
+                    rules={[{ required: true }]}
                   >
                     <Select
                       showSearch
-                      placeholder="Buscar cliente"
-                      filterOption={false}
-                      onSearch={setClienteSearch}
-                      options={clienteOptions}
+                      optionFilterProp="children"
+                      placeholder="Seleccione cliente"
+                      filterOption={(input, option) =>
+                        option.children
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
                     >
-                      {clientes.map(cliente => (
+                      {clientes.map((cliente) => (
                         <Option key={cliente.id} value={cliente.id}>
                           {cliente.nombre} {cliente.apellido}
                         </Option>
@@ -295,14 +365,19 @@ const FacturaForm = () => {
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col span={24} md={8}>
+
+                <Col xs={24} md={8}>
                   <Form.Item
                     name="vendedor_id"
                     label="Vendedor"
-                    rules={[{ required: true, message: 'Seleccione el vendedor' }]}
+                    rules={[{ required: true }]}
                   >
-                    <Select placeholder="Seleccione vendedor">
-                      {vendedores.map(vendedor => (
+                    <Select
+                      placeholder="Seleccione vendedor"
+                      showSearch
+                      optionFilterProp="children"
+                    >
+                      {vendedores.map((vendedor) => (
                         <Option key={vendedor.id} value={vendedor.id}>
                           {vendedor.nombre} {vendedor.apellido}
                         </Option>
@@ -311,28 +386,32 @@ const FacturaForm = () => {
                   </Form.Item>
                 </Col>
               </Row>
-              <Form.Item
-                name="observaciones"
-                label="Observaciones"
-              >
+
+              <Form.Item name="observaciones" label="Observaciones">
                 <Input.TextArea rows={3} />
               </Form.Item>
             </Card>
 
-            <Card 
-              title="Productos" 
+            <Card
+              title="Productos"
+              className="factura-card"
               extra={
                 <AutoComplete
                   value={productoSearch}
                   options={productoOptions}
                   style={{ width: 300 }}
-                  onSelect={(_, option) => handleAddItem(option.producto)}
-                  onSearch={handleSearchProducto}
+                  onSelect={handleAddItem}
+                  onSearch={(value) => {
+                    setProductoSearch(value);
+                    debouncedSearch(value);
+                  }}
                   placeholder="Buscar producto..."
+                  notFoundContent={searchLoading ? "Buscando..." : null}
                 >
-                  <Input 
-                    suffix={<SearchOutlined />} 
+                  <Input
+                    suffix={<SearchOutlined />}
                     prefix={<ShoppingCartOutlined />}
+                    allowClear
                   />
                 </AutoComplete>
               }
@@ -340,53 +419,93 @@ const FacturaForm = () => {
               <Table
                 columns={columns}
                 dataSource={items}
-                rowKey="producto_id"
+                rowKey="key"
                 pagination={false}
                 scroll={{ x: true }}
                 locale={{
-                  emptyText: 'No hay productos agregados'
+                  emptyText: (
+                    <Space direction="vertical">
+                      <ShoppingCartOutlined style={{ fontSize: 24 }} />
+                      <Text type="secondary">No hay productos agregados</Text>
+                    </Space>
+                  ),
                 }}
               />
             </Card>
           </Col>
-          <Col span={24} lg={8}>
-            <Card title="Resumen">
-              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                <div>
-                  <Text strong>Subtotal:</Text>
-                  <Text style={{ float: 'right' }}>
-                    ${subtotal.toLocaleString('es-CO')}
+
+          <Col xs={24} lg={8}>
+            <Card title="Resumen" className="factura-card">
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <div className="invoice-summary-row">
+                  <Text>Subtotal:</Text>
+                  <Text>
+                    {form
+                      .getFieldValue("subtotal")
+                      ?.toLocaleString("es-CO", {
+                        style: "currency",
+                        currency: "COP",
+                      })}
                   </Text>
                 </div>
-                <div>
-                  <Text strong>IVA (19%):</Text>
-                  <Text style={{ float: 'right' }}>
-                    ${impuesto.toLocaleString('es-CO')}
+
+                <div className="invoice-summary-row">
+                  <Text>IVA (19%):</Text>
+                  <Text>
+                    {form
+                      .getFieldValue("impuesto")
+                      ?.toLocaleString("es-CO", {
+                        style: "currency",
+                        currency: "COP",
+                      })}
                   </Text>
                 </div>
+
                 <Divider />
-                <div>
-                  <Text strong style={{ fontSize: '1.2em' }}>Total:</Text>
-                  <Text strong style={{ float: 'right', fontSize: '1.2em' }}>
-                    ${total.toLocaleString('es-CO')}
+
+                <div className="invoice-summary-row total">
+                  <Text strong>Total:</Text>
+                  <Text strong>
+                    {form
+                      .getFieldValue("total")
+                      ?.toLocaleString("es-CO", {
+                        style: "currency",
+                        currency: "COP",
+                      })}
                   </Text>
                 </div>
+
+                <Form.Item name="estado" label="Estado">
+                  <Select>
+                    <Option value="PENDIENTE">
+                      <Tag color="orange">PENDIENTE</Tag>
+                    </Option>
+                    <Option value="PAGADA">
+                      <Tag color="green">PAGADA</Tag>
+                    </Option>
+                    <Option value="CANCELADA">
+                      <Tag color="red">CANCELADA</Tag>
+                    </Option>
+                  </Select>
+                </Form.Item>
+
                 <Button
                   type="primary"
                   size="large"
                   block
+                  icon={<SaveOutlined />}
                   onClick={handleSubmit}
                   loading={loading}
                   disabled={items.length === 0}
                 >
-                  {isEdit ? 'Actualizar Factura' : 'Crear Factura'}
+                  {isEdit ? "Actualizar Factura" : "Crear Factura"}
                 </Button>
               </Space>
             </Card>
           </Col>
         </Row>
       </Form>
-    </div>
+    </Spin>
   );
 };
 
