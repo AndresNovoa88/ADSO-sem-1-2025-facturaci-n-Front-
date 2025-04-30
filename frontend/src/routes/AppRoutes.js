@@ -1,58 +1,71 @@
-import { lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import RequireAuth from '../components/auth/RequireAuth';
-import NotFound from '../pages/NotFound';
+// src/routes/AppRoutes.jsx
+import { lazy, Suspense } from "react";
+import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "../components/auth/ProtectedRoute";
+import AuthLayout from "../layouts/AuthLayout";
 
-// Lazy loading de módulos
-const DashboardRoutes = lazy(() => import('./modules/DashboardRoutes'));
-const FacturaRoutes = lazy(() => import('./modules/FacturaRoutes'));
-const ClienteRoutes = lazy(() => import('./modules/ClienteRoutes'));
-const ProductoRoutes = lazy(() => import('./modules/ProductoRoutes'));
-const VendedorRoutes = lazy(() => import('./modules/VendedorRoutes'));
+// Lazy loading
+const Login = lazy(() => import("../pages/Auth/Login"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const FacturaForm = lazy(() => import("../pages/Facturas/FacturaForm"));
+const NotFound = lazy(() => import("../pages/NotFound"));
 
 const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Dashboard */}
-      <Route path="dashboard/*" element={
-        <RequireAuth>
-          <DashboardRoutes />
-        </RequireAuth>
-      } />
+    <Suspense fallback={<div>Cargando...</div>}>
+      <Routes>
+        {/* Login envuelto con layout */}
+        <Route
+          path="/login"
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Login />
+              </AuthLayout>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Módulo de Facturación */}
-      <Route path="facturas/*" element={
-        <RequireAuth roles={['ADMIN', 'GERENTE', 'VENDEDOR']}>
-          <FacturaRoutes />
-        </RequireAuth>
-      } />
+        {/* Rutas protegidas */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/facturas/nueva"
+          element={
+            <ProtectedRoute>
+              <FacturaForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/facturas/editar/:id"
+          element={
+            <ProtectedRoute>
+              <FacturaForm />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Módulo de Clientes */}
-      <Route path="clientes/*" element={
-        <RequireAuth roles={['ADMIN', 'GERENTE']}>
-          <ClienteRoutes />
-        </RequireAuth>
-      } />
-
-      {/* Módulo de Productos */}
-      <Route path="productos/*" element={
-        <RequireAuth roles={['ADMIN', 'GERENTE']}>
-          <ProductoRoutes />
-        </RequireAuth>
-      } />
-
-      {/* Módulo de Vendedores */}
-      <Route path="vendedores/*" element={
-        <RequireAuth roles={['ADMIN', 'GERENTE']}>
-          <VendedorRoutes />
-        </RequireAuth>
-      } />
-
-      {/* Otras rutas */}
-      <Route path="not-found" element={<NotFound />} />
-      <Route path="*" element={<Navigate to="/not-found" replace />} />
-    </Routes>
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
 export default AppRoutes;
+// src/routes/AppRoutes.jsx

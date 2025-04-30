@@ -14,7 +14,8 @@ export const register = async (userData) => {
 };
 
 // Nuevo método para obtener perfil
-export const getProfile = async (token) => {
+export const getProfile = async () => {
+  const token = localStorage.getItem('token');
   const response = await axios.get(`${API_URL}/auth/profile`, {
     headers: { Authorization: `Bearer ${token}` }
   });

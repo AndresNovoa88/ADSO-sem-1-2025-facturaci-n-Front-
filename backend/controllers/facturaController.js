@@ -127,7 +127,7 @@ exports.createFactura = async (req, res) => {
     }
     
     // Generar número de factura
-    const codigo = await this.generateFacturaNumber();
+    const codigo = await exports.generateFacturaNumber();
     
     // Validar cliente y vendedor
     const [cliente, vendedor] = await Promise.all([
@@ -242,7 +242,7 @@ exports.createFactura = async (req, res) => {
     await transaction.commit();
     
     // Generar PDF (async - no bloquea la respuesta)
-    this.generatePDF(factura, detalles, cliente, vendedor);
+    //this.generatePDF(factura, detalles, cliente, vendedor);
     
     // Posible integración con IA para análisis
     //this.analyzeWithAI(factura, detalles);

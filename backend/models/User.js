@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
+const Rol = require('./Rol');
 const bcrypt = require('bcryptjs');
 
 const User = sequelize.define('User', {
@@ -22,7 +23,11 @@ const User = sequelize.define('User', {
   },
   rol_id: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    references: {  
+      model: Rol,
+      key: 'id'
+    }
   }
 }, {
   hooks: {
@@ -31,10 +36,16 @@ const User = sequelize.define('User', {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }
+    },
+    beforeUpdate: async (user) => {
+      if (user.changed('password')) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
     }
   }
 });
-
+//User.belongsTo(Rol, { foreignKey: 'rol_id' });
 User.prototype.validPassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };

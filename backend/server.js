@@ -1,25 +1,43 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { sequelize } = require('./config/db');
+const { sequelize } = require('./models');
 const authRoutes = require('./routes/authRoutes');
-const { User } = require('./models/User');
+const facturaRoutes = require('./routes/facturaRoutes');
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+// Middlewares esenciales
+app.use(cors({
+  origin: 'http://localhost:3000', // Asegurar CORS
+  credentials: true
+}));
 app.use(express.json());
 
-// Rutas
+// Configuración de rutas
 app.use('/api/auth', authRoutes);
+app.use('/api/facturas', facturaRoutes);
 
-// Sincronización de modelos
-sequelize.sync({ force: true })
-  .then(() => console.log('Modelos sincronizados'))
-  .catch(err => console.error('Error sincronizando modelos:', err));
+// Sincronización segura de modelos
+const initializeServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Conexión a DB exitosa');
+    
+    await sequelize.sync({ alter: true });
+    console.log('Modelos sincronizados');
+    
+    // Inicializar datos esenciales
+    await require('./seeders/initialRoles')();
+    
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Servidor en http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Error de inicialización:', error);
+    process.exit(1);
+  }
+};
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Servidor backend en http://localhost:${PORT}`);
-});
+initializeServer();

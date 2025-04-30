@@ -1,20 +1,17 @@
-import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import { ConfigProvider } from 'antd';
-import esES from 'antd/lib/locale/es_ES';
+import { Suspense } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import RootRouter from './routes';
-import './assets/styles/main.css';
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
   return (
-    <ConfigProvider locale={esES}>
-      <Router>
-        <AuthProvider>
-          <RootRouter />
-        </AuthProvider>
-      </Router>
-    </ConfigProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <Suspense fallback={<div className="full-page-loader">Cargando módulos...</div>}>
+          <AppRoutes />
+        </Suspense>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
