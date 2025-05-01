@@ -1,34 +1,14 @@
+// backend/models/User.js
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
-const Rol = require('./Rol');
-const bcrypt = require('bcryptjs');
+const { sequelize }   = require('../config/db');
+const Rol             = require('./Rol');
+const bcrypt          = require('bcryptjs');
 
 const User = sequelize.define('User', {
-  username: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true
-    }
-  },
-  rol_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {  
-      model: Rol,
-      key: 'id'
-    }
-  }
+  username: { type: DataTypes.STRING, allowNull: false, unique: true },
+  password: { type: DataTypes.STRING, allowNull: false },
+  email:    { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
+  rol_id:   { type: DataTypes.INTEGER, allowNull: false, references: { model: Rol, key: 'id' } }
 }, {
   hooks: {
     beforeCreate: async (user) => {
@@ -45,9 +25,13 @@ const User = sequelize.define('User', {
     }
   }
 });
-//User.belongsTo(Rol, { foreignKey: 'rol_id' });
+
+// Relación con alias **UserRol** (único)
+User.belongsTo(Rol, { foreignKey: 'rol_id', as: 'UserRol' });
+
+// Método de instancia para validar contraseña
 User.prototype.validPassword = async function(password) {
-  return await bcrypt.compare(password, this.password);
+  return bcrypt.compare(password, this.password);
 };
 
 module.exports = User;

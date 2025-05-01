@@ -1,3 +1,4 @@
+//src/pages/Auth/Login.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message, Typography } from 'antd';
@@ -14,7 +15,7 @@ const Login = () => {
   const onFinish = async (values) => {
     try {
       setLoading(true);
-      await login(values.username, values.password);
+      await login({ username: values.username, password: values.password });
       message.success('Bienvenido al sistema');
       navigate('/dashboard');
     } catch (error) {

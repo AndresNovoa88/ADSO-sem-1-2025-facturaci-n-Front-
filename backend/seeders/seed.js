@@ -1,6 +1,8 @@
 const seedRoles = require('./initialRoles');
 const seedUsers = require('./initialUsers');
 const { sequelize } = require('../models');
+const bcrypt = require('bcryptjs');
+const { User } = require('../models'); 
 
 const runSeed = async () => {
   try {
