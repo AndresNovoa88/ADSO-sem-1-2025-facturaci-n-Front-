@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { login as apiLogin, getProfile } from '../api/auth';
-import { setAuthToken, removeAuthToken } from '../utils/auth';
+import { setAuthToken, removeAuthToken, getAuthToken } from '../utils/auth';
 
 const AuthContext = createContext();
 
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const loadUser = useCallback(async () => {
     console.log('Iniciando carga de usuario...');
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (!token) throw new Error('No token found');
       
       setAuthToken(token);
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (token && !authState.user) {
         await loadUser();
       } else {
@@ -56,16 +56,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const { token, user } = await apiLogin(credentials);
       
-      localStorage.setItem('token', token);
       setAuthToken(token);
-      
       setAuthState({
         user,
         loading: false
       });
       
-      message.success('Bienvenido');
-      navigate('/dashboard');
+      // Se elimina message.success y navigate
     } catch (error) {
       message.error(error.response?.data?.message || 'Error de autenticación');
       throw error;

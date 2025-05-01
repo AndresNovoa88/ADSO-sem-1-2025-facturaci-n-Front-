@@ -1,3 +1,4 @@
+//src/layouts/AppLayout.js
 import React from 'react';
 import { Layout } from 'antd';
 import { useAuth } from '../contexts/AuthContext';
