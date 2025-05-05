@@ -26,9 +26,6 @@ const User = sequelize.define('User', {
   }
 });
 
-// Relación con alias **UserRol** (único)
-User.belongsTo(Rol, { foreignKey: 'rol_id', as: 'UserRol' });
-
 // Método de instancia para validar contraseña
 User.prototype.validPassword = async function(password) {
   return bcrypt.compare(password, this.password);

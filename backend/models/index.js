@@ -9,7 +9,7 @@ const DetalleFactura  = require('./DetalleFactura');
 
 // --- Relaciones Rol ↔ User ---
 Rol.hasMany(User,    { foreignKey: 'rol_id' });
-//User.belongsTo(Rol,  { foreignKey: 'rol_id', as: 'UserRol' });
+User.belongsTo(Rol,  { foreignKey: 'rol_id', as: 'UserRol' });
 
 // --- Cliente ↔ Factura (1:N) ---
 Cliente.hasMany(Factura,     { foreignKey: 'cliente_id' });

@@ -106,10 +106,10 @@ const FacturaForm = () => {
 
   // Búsqueda con debounce
   const debouncedSearch = useDebounce(async (value) => {
-    if (value.length < 3) {
+    if (!value || value.length < 3) {
       setProductoOptions([]);
       return;
-    }
+    }  
 
     try {
       setSearchLoading(true);
