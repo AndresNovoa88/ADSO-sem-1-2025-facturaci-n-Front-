@@ -3,6 +3,10 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import AuthLayout from '../layouts/AuthLayout';
 import AppLayout from '../layouts/AppLayout';
+import ListClientes from '../pages/Clientes/ListClientes';
+import ListProductos from '../pages/Productos/ListProductos';
+import ClienteForm from '../pages/Clientes/ClienteForm';
+import ProductoForm from '../pages/Productos/ProductoForm';
 
 
 // Lazy-load de páginas
@@ -37,7 +41,15 @@ export default function AppRoutes() {
           <Route path="/facturas/nueva" element={<FacturaForm />} />
           <Route path="/facturas/editar/:id" element={<FacturaForm />} />
           <Route path="/clientes" element={<Clientes />} />
-          <Route path="/productos" element={<Productos />} />
+ <Route path="/clientes" element={<ListClientes />} />
+ <Route path="/clientes/nuevo" element={<ClienteForm />} />
+ <Route path="/clientes/:id" element={<ClienteForm />} />
+
+ <Route path="/productos" element={<Productos />} />
+ <Route path="/productos" element={<ListProductos />} />
+ <Route path="/productos/nuevo" element={<ProductoForm />} />
+ <Route path="/productos/:id" element={<ProductoForm />} />
+
         </Route>
 
         {/* Ruta 404 */}
