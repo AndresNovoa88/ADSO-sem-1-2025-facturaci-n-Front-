@@ -36,12 +36,16 @@ const ProductoForm = () => {
         message.success('Producto creado');
       }
       navigate('/productos');
-    } catch {
-      message.error('Error al guardar producto');
+    } catch (error) {
+      if (error.response && error.response.data && error.response.data.message) {
+        message.error(error.response.data.message); // ⬅️ muestra el mensaje del backend
+      } else {
+        message.error('Error al guardar producto');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   return (
     <Card>

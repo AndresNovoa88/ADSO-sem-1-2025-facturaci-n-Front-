@@ -6,6 +6,8 @@ const morgan = require('morgan');             // ▶️ para logging de peticion
 const { sequelize } = require('./models');
 const authRoutes = require('./routes/authRoutes');
 const facturaRoutes = require('./routes/facturaRoutes');
+const productoRoutes = require('./routes/productoRoutes');
+const clienteRoutes = require('./routes/clienteRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,6 +29,8 @@ app.use(express.json());
 // ── RUTAS ───────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/facturas', facturaRoutes);
+app.use('/api/productos', productoRoutes);
+app.use('/api/clientes', clienteRoutes);
 
 // Ruta de desarrollo para reset de contraseña (solo dev)
 if (process.env.NODE_ENV !== 'production') {
