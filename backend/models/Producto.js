@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/db');
+const { sequelize } = require('./index');
 
 const Producto = sequelize.define('Producto', {
   nombre:     { type: DataTypes.STRING(100), allowNull: false, unique: true },

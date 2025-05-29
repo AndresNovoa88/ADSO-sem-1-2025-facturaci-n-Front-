@@ -1,9 +1,8 @@
-// backend/server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const morgan = require('morgan');             // ▶️ para logging de peticiones
-const { sequelize } = require('./models');
+const morgan = require('morgan');
+const { sequelize } = require('./models'); // Importa desde models/index.js
 const authRoutes = require('./routes/authRoutes');
 const facturaRoutes = require('./routes/facturaRoutes');
 const productoRoutes = require('./routes/productoRoutes');
@@ -12,45 +11,104 @@ const clienteRoutes = require('./routes/clienteRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ── MIDDLEWARES ────────────────────────────────────
-// 1) Logging de cada petición
+// Middlewares
 app.use(morgan('dev'));
-
-// 2) Health check rápido
 app.get('/heartbeat', (req, res) => res.json({ status: 'up' }));
 
-// 3) CORS y JSON
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true,
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://tudominio.com' 
+    : 'http://localhost:3000',
+  credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
-// ── RUTAS ───────────────────────────────────────────
+// Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/facturas', facturaRoutes);
 app.use('/api/productos', productoRoutes);
 app.use('/api/clientes', clienteRoutes);
 
-// Ruta de desarrollo para reset de contraseña (solo dev)
 if (process.env.NODE_ENV !== 'production') {
   console.log('⚠️ Ruta de desarrollo /dev habilitada');
   app.use('/dev', require('./routes/devRoutes'));
 }
 
-// ── INICIO DEL SERVIDOR ────────────────────────────
-(async () => {
+// Manejo de errores
+app.use((err, req, res, next) => {
+  console.error('🔴 Error:', err);
+  res.status(500).json({
+    error: 'Error interno',
+    message: process.env.NODE_ENV === 'production' 
+      ? 'Contacte al soporte' 
+      : err.message
+  });
+});
+
+// Inicio del servidor
+const startServer = async () => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ Conexión a DB exitosa');
-    await sequelize.sync({ alter: true });
+    console.log("🔍 Configuración DB:", {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      environment: process.env.NODE_ENV || 'development'
+    });
+
+    // Conexión con reintentos
+    const maxRetries = 5;
+    for (let i = 1; i <= maxRetries; i++) {
+      try {
+        console.log(`🔌 Conexión a DB (Intento ${i}/${maxRetries})`);
+        await sequelize.authenticate();
+        console.log('✅ Conexión a DB exitosa');
+        break;
+      } catch (error) {
+        console.error(`❌ Error: ${error.message}`);
+        if (i < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    // Sincronización segura
+    const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: true };
+    console.log(`🔄 Sincronizando modelos...`);
+    await sequelize.sync(syncOptions);
     console.log('✅ Modelos sincronizados');
-    await require('./seeders/initialRoles')();  // Seedear roles
-    app.listen(PORT, () =>
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`)
-    );
+
+    // Datos iniciales
+    console.log('🌱 Verificando datos iniciales...');
+    await require('./seeders/initialRoles')();
+    console.log('✅ Datos iniciales listos');
+
+    // Iniciar servidor
+    app.listen(PORT, () => {
+      console.log(`\n🚀 Servidor en http://localhost:${PORT}`);
+      console.log(`⏰ Inicio: ${new Date().toLocaleString()}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('\n⚠️ MODO DESARROLLO - No usar en producción');
+      }
+    });
+
+    // Cierre limpio
+    process.on('SIGINT', async () => {
+      console.log('\n🔻 Cerrando servidor (SIGINT)...');
+      await sequelize.close();
+      process.exit(0);
+    });
+
   } catch (error) {
-    console.error('❌ Error de inicialización:', error);
+    console.error('\n❌ ERROR INICIALIZACIÓN:', error);
+    console.error('\n🔧 Soluciones:');
+    console.error('1. Verificar credenciales en .env');
+    console.error('2. Comprobar estado de MariaDB/MySQL');
+    console.error('3. Validar permisos de usuario en DB');
     process.exit(1);
   }
-})();
+};
+
+startServer();
