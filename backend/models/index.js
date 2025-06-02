@@ -1,31 +1,6 @@
 // backend/models/index.js
-const { Sequelize } = require('sequelize');
-const dotenv = require('dotenv');
+const sequelize = require('../config/db');const dotenv = require('dotenv');
 dotenv.config();
-
-// Crea la instancia única de Sequelize
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    dialect: 'mysql',
-    dialectModule: require('mysql2'),
-    logging: false,
-    define: {
-      timestamps: false,
-      underscored: true,
-    },
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
-  }
-);
 
 // Importa modelos
 const Rol = require('./Rol');

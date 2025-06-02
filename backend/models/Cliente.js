@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('./index');
+const sequelize = require('../config/db');
 
+// Definición del modelo Cliente
 const Cliente = sequelize.define('Cliente', {
   nombre:    { type: DataTypes.STRING,  allowNull: false },
   apellido:  { type: DataTypes.STRING,  allowNull: false },

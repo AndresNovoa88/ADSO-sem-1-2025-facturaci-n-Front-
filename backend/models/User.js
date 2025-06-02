@@ -1,6 +1,6 @@
 // backend/models/User.js
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('./index');
+const sequelize = require('../config/db');
 const Rol             = require('./Rol');
 const bcrypt          = require('bcryptjs');
 
