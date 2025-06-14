@@ -1,6 +1,5 @@
 const { DetalleFactura, Factura, Producto } = require('../models');
-const { sequelize } = require('../config/db');
-
+const { sequelize } = require('../models');
 exports.getDetallesByFactura = async (req, res) => {
   try {
     const { facturaId } = req.params;

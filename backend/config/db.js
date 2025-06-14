@@ -14,9 +14,16 @@ const sequelize = new Sequelize(
     dialectModule: require('mysql2'),
     logging: false,
     define: {
-      timestamps: false,
+      timestamps: false,  // Deshabilitar a nivel global
       underscored: true,
     },
+    dialectOptions: {
+      // Permitir fechas cero
+      dateStrings: true,
+      typeCast: true,
+      flags: '-FOUND_ROWS'
+    },
+    timezone: '-05:00',  // Ajustar según tu zona horaria
     pool: {
       max: 5,
       min: 0,

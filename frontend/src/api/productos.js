@@ -1,3 +1,4 @@
+// frontend/src/api/productos.js
 import axios from 'axios';
 
 const API = axios.create({
@@ -14,6 +15,7 @@ API.interceptors.request.use((config) => {
 });
 
 export const fetchProductos  = () => API.get('/productos');
+export const fetchProductoById = (id) => API.get(`/productos/${id}`);
 export const createProducto  = (data) => API.post('/productos', data);
 export const updateProducto  = (id, data) => API.put(`/productos/${id}`, data);
 export const deleteProducto  = (id) => API.delete(`/productos/${id}`);

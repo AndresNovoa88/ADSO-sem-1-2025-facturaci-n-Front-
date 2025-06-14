@@ -38,7 +38,7 @@ import {
 } from "../../api/facturas";
 import PageHeader from "../../components/common/PageHeader";
 import { useDebounce } from "../../hooks/useDebounce";
-import "./FacturaForm.css"; // Estilos personalizados
+import "./FacturaForm.css";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -46,7 +46,6 @@ const { Title, Text } = Typography;
 const FacturaForm = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [productos, setProductos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [items, setItems] = useState([]);
@@ -57,19 +56,36 @@ const FacturaForm = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
 
+  // Manejar errores de API
+  const handleApiError = (error) => {
+    if (error.response && error.response.status === 401) {
+      message.error('Sesión expirada. Redirigiendo...');
+      localStorage.removeItem('token');
+      setTimeout(() => navigate('/login'), 2000);
+    } else {
+      message.error(error.message || 'Error en la solicitud');
+    }
+  };
+
   // Cargar datos iniciales
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
     const loadInitialData = async () => {
       try {
         setLoading(true);
 
         const [clientesRes, vendedoresRes] = await Promise.all([
-          fetchClientes().catch(() => ({ data: [] })),
-          fetchVendedores().catch(() => ({ data: [] })),
+          fetchClientes().catch(() => []),
+          fetchVendedores().catch(() => []),
         ]);
 
-        setClientes(clientesRes.data);
-        setVendedores(vendedoresRes.data);
+        setClientes(clientesRes);
+        setVendedores(vendedoresRes);
 
         if (isEdit) {
           const facturaRes = await fetchFacturaById(id);
@@ -95,7 +111,7 @@ const FacturaForm = () => {
           );
         }
       } catch (error) {
-        message.error("Error al cargar datos: " + error.message);
+        handleApiError(error);
       } finally {
         setLoading(false);
       }
@@ -115,14 +131,14 @@ const FacturaForm = () => {
       setSearchLoading(true);
       const response = await fetchProductos({ search: value });
       setProductoOptions(
-        response.data.map((p) => ({
+        response.map((p) => ({
           value: p.id,
           label: `${p.codigo} - ${p.nombre} ($${p.precio.toLocaleString()})`,
           producto: p,
         }))
       );
     } catch (error) {
-      message.error("Error buscando productos");
+      handleApiError(error);
     } finally {
       setSearchLoading(false);
     }
@@ -143,7 +159,7 @@ const FacturaForm = () => {
     [form]
   );
 
-  // Efecto para calcular totales cuando cambian los items
+  // Efecto para calcular totales
   useEffect(() => {
     calculateTotals(items);
   }, [items, calculateTotals]);
@@ -236,7 +252,7 @@ const FacturaForm = () => {
 
       navigate("/facturas");
     } catch (error) {
-      message.error(error.message || "Error al guardar la factura");
+      handleApiError(error);
     } finally {
       setLoading(false);
     }

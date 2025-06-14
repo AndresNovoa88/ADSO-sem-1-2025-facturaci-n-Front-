@@ -39,10 +39,9 @@ export default function AppRoutes() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/facturas/nueva" element={<FacturaForm />} />
           <Route path="/facturas/editar/:id" element={<FacturaForm />} />
-          <Route path="/clientes" element={<Clientes />} />
           <Route path="/clientes" element={<ListClientes />} />
           <Route path="/clientes/nuevo" element={<ClienteForm />} />
-          <Route path="/clientes/:id" element={<ClienteForm />} />
+          <Route path="/clientes/editar/:id" element={<ClienteForm />} />
 
           <Route path="/productos" element={<Productos />} />
           <Route path="/productos" element={<ListProductos />} />

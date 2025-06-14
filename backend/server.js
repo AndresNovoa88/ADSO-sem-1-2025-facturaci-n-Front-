@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const { sequelize } = require('./models'); // Importa desde models/index.js
+const { sequelize } = require('./models');
 const authRoutes = require('./routes/authRoutes');
 const facturaRoutes = require('./routes/facturaRoutes');
 const productoRoutes = require('./routes/productoRoutes');
@@ -74,11 +74,19 @@ const startServer = async () => {
       }
     }
 
+    // 🔧 SOLUCIÓN: Ajustar configuración SQL para evitar error de fechas
+    console.log('🔧 Ajustando configuración SQL para sincronización...');
+    await sequelize.query("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
+    
     // Sincronización segura
     const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: true };
-    console.log(`🔄 Sincronizando modelos...`);
+    console.log(`🔄 Sincronizando modelos con opciones:`, syncOptions);
     await sequelize.sync(syncOptions);
-    console.log('✅ Modelos sincronizados');
+    
+    // Restaurar configuración segura
+    console.log('↩️ Restaurando configuración SQL...');
+    await sequelize.query("SET SESSION sql_mode = 'STRICT_ALL_TABLES'");
+    console.log('✅ Modelos sincronizados | Modo SQL restaurado');
 
     // Datos iniciales
     console.log('🌱 Verificando datos iniciales...');

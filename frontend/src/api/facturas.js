@@ -1,41 +1,37 @@
 // src/api/facturas.js
-import axios from 'axios';
+import api from './api';
 
-const API_URL = process.env.REACT_APP_API_URL;
-
-// Métodos existentes
 export const fetchFacturas = async () => {
-  const response = await axios.get(`${API_URL}/facturas`);
+  const response = await api.get('/facturas');
   return response.data;
 };
 
 export const createFactura = async (facturaData) => {
-  const response = await axios.post(`${API_URL}/facturas`, facturaData);
+  const response = await api.post('/facturas', facturaData);
   return response.data;
 };
 
-// Nuevos métodos requeridos
 export const fetchClientes = async () => {
-  const response = await axios.get(`${API_URL}/clientes`);
+  const response = await api.get('/clientes');
   return response.data;
 };
 
 export const fetchVendedores = async () => {
-  const response = await axios.get(`${API_URL}/vendedores`);
+  const response = await api.get('/vendedores');
   return response.data;
 };
 
-export const fetchProductos = async () => {
-  const response = await axios.get(`${API_URL}/productos`);
+export const fetchProductos = async (params = {}) => {
+  const response = await api.get('/productos', { params });
   return response.data;
 };
 
 export const fetchFacturaById = async (id) => {
-  const response = await axios.get(`${API_URL}/facturas/${id}`);
+  const response = await api.get(`/facturas/${id}`);
   return response.data;
 };
 
 export const updateFactura = async (id, data) => {
-  const response = await axios.put(`${API_URL}/facturas/${id}`, data);
+  const response = await api.put(`/facturas/${id}`, data);
   return response.data;
 };
