@@ -1,3 +1,4 @@
+//backend/seeders/initialUsers.js
 const { User, Rol, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 

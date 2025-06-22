@@ -1,4 +1,4 @@
-//checkRole.js
+//backend/middlewares/checkRole.js
 module.exports = (rolesPermitidos) => {
     return (req, res, next) => {
       if (!req.user) {

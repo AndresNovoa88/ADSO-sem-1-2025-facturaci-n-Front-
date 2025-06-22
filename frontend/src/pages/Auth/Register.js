@@ -1,0 +1,1 @@
+//frontend/src/pages/Auth/Register.js este lo tengo registrado pero no contiene el codigo aun

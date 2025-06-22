@@ -1,9 +1,9 @@
-// config/db.js
 const { Sequelize } = require('sequelize');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const sequelize = new Sequelize(
+// Solo exporta la instancia de Sequelize directamente
+module.exports = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
   process.env.DB_PASSWORD,
@@ -14,16 +14,14 @@ const sequelize = new Sequelize(
     dialectModule: require('mysql2'),
     logging: false,
     define: {
-      timestamps: false,  // Deshabilitar a nivel global
+      timestamps: false,
       underscored: true,
     },
     dialectOptions: {
-      // Permitir fechas cero
       dateStrings: true,
-      typeCast: true,
-      flags: '-FOUND_ROWS'
+      typeCast: true
     },
-    timezone: '-05:00',  // Ajustar según tu zona horaria
+    timezone: '-05:00',
     pool: {
       max: 5,
       min: 0,
@@ -32,5 +30,3 @@ const sequelize = new Sequelize(
     }
   }
 );
-
-module.exports = sequelize;

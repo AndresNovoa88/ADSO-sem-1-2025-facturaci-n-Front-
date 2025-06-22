@@ -28,7 +28,7 @@ const User = sequelize.define('User', {
 
 // Método de instancia para validar contraseña
 User.prototype.validPassword = async function(password) {
-  return bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password, this.password);
 };
 
 module.exports = User;

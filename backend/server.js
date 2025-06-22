@@ -1,3 +1,4 @@
+//backend/server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,6 +8,8 @@ const authRoutes = require('./routes/authRoutes');
 const facturaRoutes = require('./routes/facturaRoutes');
 const productoRoutes = require('./routes/productoRoutes');
 const clienteRoutes = require('./routes/clienteRoutes');
+const vendedorRoutes = require('./routes/vendedorRoutes');
+const passwordRoutes = require('./routes/passwordRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +31,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/facturas', facturaRoutes);
 app.use('/api/productos', productoRoutes);
 app.use('/api/clientes', clienteRoutes);
+app.use('/api/vendedores', vendedorRoutes);
+app.use('/api/auth', passwordRoutes);
 
 if (process.env.NODE_ENV !== 'production') {
   console.log('⚠️ Ruta de desarrollo /dev habilitada');

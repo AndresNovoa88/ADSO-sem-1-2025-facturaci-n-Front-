@@ -35,15 +35,31 @@ exports.getVendedorById = async (req, res) => {
 
 exports.createVendedor = async (req, res) => {
   try {
+    console.log('📥 Datos recibidos:', req.body); // Agregar log
+    
     // Validar cuota de ventas
     if (req.body.cuota_ventas && req.body.cuota_ventas < 0) {
       return res.status(400).json({ error: 'La cuota de ventas no puede ser negativa' });
     }
     
+    console.log('🔁 Intentando crear vendedor...');
     const vendedor = await Vendedor.create(req.body);
+    console.log('✅ Vendedor creado:', vendedor.toJSON());
+    
     res.status(201).json(vendedor);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('❌ Error al crear vendedor:', error);
+    
+    // Manejo de errores de validación de Sequelize
+    if (error.name === 'SequelizeValidationError') {
+      const errors = error.errors.map(err => err.message);
+      return res.status(400).json({ errors });
+    }
+    
+    res.status(400).json({ 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
