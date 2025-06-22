@@ -10,13 +10,13 @@ exports.getAllProductos = async (req, res) => {
 
     if (search) {
       where[Op.or] = [
-        { nombre: { [Op.iLike]: `%${search}%` } },
-        { descripcion: { [Op.iLike]: `%${search}%` } }
+        { nombre: { [Op.like]: `%${search}%` } },
+        { descripcion: { [Op.like]: `%${search}%` } }
       ];
     }
 
     if (categoria) {
-      where.categoria = { [Op.iLike]: `%${categoria}%` };
+      where.categoria = { [Op.like]: `%${categoria}%` };
     }
 
     const productos = await Producto.findAll({ where });

@@ -103,7 +103,7 @@ const FacturaForm = () => {
           });
 
           setItems(
-            facturaRes.detalles.map((d) => ({
+            facturaRes.items.map((d) => ({
               ...d,
               producto: d.producto,
               key: d.producto.id,
@@ -120,44 +120,51 @@ const FacturaForm = () => {
     loadInitialData();
   }, [id, form, isEdit, navigate]);
 
-  // Búsqueda con debounce
-  const debouncedSearch = useDebounce(async (value) => {
-    if (!value || value.length < 3) {
+  const debouncedSearch = useDebounce(productoSearch, 500);
+
+  // Manejar cambio de búsqueda de producto
+ useEffect(() => {
+  const buscar = async () => {
+    if (!debouncedSearch || debouncedSearch.length < 3) {
       setProductoOptions([]);
       return;
-    }  
+    }
 
     try {
       setSearchLoading(true);
-      const response = await fetchProductos({ search: value });
+      const response = await fetchProductos({ search: debouncedSearch });
       setProductoOptions(
         response.map((p) => ({
-          value: p.id,
-          label: `${p.codigo} - ${p.nombre} ($${p.precio.toLocaleString()})`,
-          producto: p,
-        }))
+    value: p.id,
+    label: `${p.nombre} ($${p.precio.toLocaleString()})`,
+    producto: p,
+  }))
       );
     } catch (error) {
       handleApiError(error);
     } finally {
       setSearchLoading(false);
     }
-  }, 500);
+  };
+
+  buscar();
+}, [debouncedSearch]);
+
 
   // Calcular totales
   const calculateTotals = useCallback(
-    (items) => {
-      const subtotal = items.reduce(
-        (sum, item) => sum + item.precio_unitario * item.cantidad,
-        0
-      );
-      const impuesto = subtotal * 0.19; // 19% IVA
-      const total = subtotal + impuesto;
+  (items) => {
+    const subtotal = items.reduce((sum, item) => {
+      const precio = parseFloat(item.precio_unitario);
+      return sum + precio * item.cantidad;
+    }, 0);
+    const impuesto = subtotal * 0.19;
+    const total = subtotal + impuesto;
 
-      form.setFieldsValue({ subtotal, impuesto, total });
-    },
-    [form]
-  );
+    form.setFieldsValue({ subtotal, impuesto, total });
+  },
+  [form]
+);
 
   // Efecto para calcular totales
   useEffect(() => {
@@ -233,10 +240,10 @@ const FacturaForm = () => {
       const facturaData = {
         ...values,
         fecha: values.fecha.format("YYYY-MM-DD"),
-        detalles: items.map((item) => ({
+        items: items.map((item) => ({
           producto_id: item.producto_id,
           cantidad: item.cantidad,
-          precio_unitario: item.precio_unitario,
+          precio_unitario: parseFloat(item.precio_unitario),
         })),
       };
 
@@ -246,6 +253,7 @@ const FacturaForm = () => {
         await updateFactura(id, facturaData);
         message.success("Factura actualizada exitosamente");
       } else {
+        console.log("Factura a enviar:", facturaData);
         await createFactura(facturaData);
         message.success("Factura creada exitosamente");
       }
@@ -417,10 +425,7 @@ const FacturaForm = () => {
                   options={productoOptions}
                   style={{ width: 300 }}
                   onSelect={handleAddItem}
-                  onSearch={(value) => {
-                    setProductoSearch(value);
-                    debouncedSearch(value);
-                  }}
+                  onSearch={setProductoSearch}
                   placeholder="Buscar producto..."
                   notFoundContent={searchLoading ? "Buscando..." : null}
                 >

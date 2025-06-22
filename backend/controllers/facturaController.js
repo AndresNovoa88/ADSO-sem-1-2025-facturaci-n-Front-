@@ -14,7 +14,7 @@ const path = require('path');
 
 exports.generateFacturaNumber = async () => {
   const lastFactura = await Factura.findOne({
-    order: [['createdAt', 'DESC']],
+    order: [['id', 'DESC']],
     attributes: ['codigo']
   });
   
@@ -118,7 +118,8 @@ exports.getFacturaById = async (req, res) => {
 exports.createFactura = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
-    const { cliente_id, vendedor_id, items, observaciones } = req.body;
+    const { cliente_id, vendedor_id, items, observaciones, estado } = req.body;
+    console.log('📦 Body recibido en createFactura:', req.body);
     
     // Validaciones básicas
     if (!items || items.length === 0) {
@@ -141,8 +142,10 @@ exports.createFactura = async (req, res) => {
         error: 'Cliente o vendedor no encontrado' 
       });
     }
+    console.log('🔐 Usuario autenticado:', req.user);
     
     // Validar productos y stock
+    console.log('🧺 Items recibidos (productos a facturar):', items);
     const productos = await Producto.findAll({
       where: { 
         id: { [Op.in]: items.map(item => item.producto_id) } 
@@ -206,6 +209,18 @@ exports.createFactura = async (req, res) => {
     const total = subtotal + impuesto;
     
     // Crear factura
+    console.log('🧾 Datos a insertar en Factura:', {
+  cliente_id,
+  vendedor_id,
+  subtotal,
+  impuesto,
+  total,
+  estado,
+  observaciones
+});
+console.log('🧾 Datos para Factura.create:', {
+      codigo, cliente_id, vendedor_id, subtotal, impuesto, total, estado, observaciones
+    });
     const factura = await Factura.create({
       codigo,
       cliente_id,
@@ -214,7 +229,7 @@ exports.createFactura = async (req, res) => {
       impuesto,
       total,
       observaciones,
-      estado: 'PENDIENTE',
+      estado,
       creado_por: req.user.id
     }, { transaction });
     
@@ -249,6 +264,8 @@ exports.createFactura = async (req, res) => {
     
     res.status(201).json(factura);
   } catch (error) {
+    console.error('🔥 [createFactura] Error capturado:', error);
+    console.error('🔥 [createFactura] Error.message:', error.message);
     await transaction.rollback();
     res.status(400).json({ error: error.message });
   }

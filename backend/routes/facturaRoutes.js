@@ -6,7 +6,9 @@ const checkRole = require('../middlewares/checkRole');
 
 router.get('/', authMiddleware, facturaController.getAllFacturas);
 router.get('/:id', authMiddleware, facturaController.getFacturaById);
-router.post('/', authMiddleware, checkRole(['Vendedor', 'Gerente']), facturaController.createFactura);
-router.put('/:id/anular', authMiddleware, checkRole(['Gerente', 'Administrador']), facturaController.anularFactura);
+router.post('/', authMiddleware, facturaController.createFactura);
+ //checkRole(['Vendedor', 'Gerente']),
+router.put('/:id/anular', authMiddleware, facturaController.anularFactura);
+//checkRole(['Gerente', 'Administrador']),
 
 module.exports = router;

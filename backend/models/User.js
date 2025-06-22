@@ -29,8 +29,8 @@ const User = sequelize.define('User', {
     }
   }
 }, {
-  tableName: 'usuarios',      // Alineado con tu tabla real
-  timestamps: false,          // Si tu tabla no tiene createdAt/updatedAt
+  tableName: 'usuarios',      
+  timestamps: false,          
   hooks: {
     beforeCreate: async (user) => {
       if (user.password) {
