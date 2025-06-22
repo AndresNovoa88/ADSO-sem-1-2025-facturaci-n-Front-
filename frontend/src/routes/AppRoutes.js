@@ -7,6 +7,7 @@ import ListClientes from "../pages/Clientes/ListClientes";
 import ListProductos from "../pages/Productos/ListProductos";
 import ChangePassword from '../pages/Auth/ChangePassword';
 
+
 // Lazy-load de páginas
 const Login = lazy(() => import("../pages/Auth/Login"));
 const Dashboard = lazy(() => import("../pages/Dashboard/index"));

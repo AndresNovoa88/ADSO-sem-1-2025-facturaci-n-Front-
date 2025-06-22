@@ -1,19 +1,18 @@
 // backend/controllers/authController.js
-
-// backend/controllers/authController.js
-require('dotenv').config();
+//require('dotenv').config();
 const { User, Rol } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { secret, expiresIn } = require('../config/config');
 
-// Iniciar sesión con usuario real en DB
+// Login con usuario real de la base de datos (con console logs para debugging)
 exports.login = async (req, res) => {
   const { username, password } = req.body;
-  console.log('🔐 Intento de login con usuario:', username);
+  console.log('🔐 login invoked');
+  console.log('Received credentials:', { username, password });
 
   try {
-    // Buscar usuario y su rol
+    // Buscar usuario y rol
     const user = await User.findOne({
       where: { username },
       include: [{ model: Rol, as: 'UserRol', attributes: ['nombre'] }]
@@ -21,25 +20,26 @@ exports.login = async (req, res) => {
 
     if (!user) {
       console.log('❌ Usuario no encontrado');
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      return res.status(401).json({ status: 'error', message: 'Credenciales inválidas' });
     }
 
+    // Mostrar hash almacenado para debugging
+    console.log('Stored hash for user:', user.password);
+
     // Verificar contraseña
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match result:', isMatch);
+    if (!isMatch) {
       console.log('❌ Contraseña incorrecta');
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      return res.status(401).json({ status: 'error', message: 'Credenciales inválidas' });
     }
 
     // Generar JWT
-    const token = jwt.sign(
-      { id: user.id, role: user.UserRol.nombre },
-      secret,
-      { expiresIn }
-    );
+    const token = jwt.sign({ id: user.id, role: user.UserRol.nombre }, secret, { expiresIn });
+    console.log('✅ Login exitoso, token generado');
 
-    console.log('✅ Login exitoso para:', username);
     return res.json({
+      status: 'success',
       token,
       user: {
         id: user.id,
@@ -48,41 +48,41 @@ exports.login = async (req, res) => {
         role: user.UserRol.nombre
       }
     });
-  } catch (err) {
-    console.error('💥 Error en login:', err);
-    return res.status(500).json({ error: 'Error en el servidor' });
+  } catch (error) {
+    console.error('💥 Error en login:', error);
+    return res.status(500).json({ status: 'error', message: 'Error interno del servidor' });
   }
 };
 
 // Obtener perfil del usuario autenticado
 exports.getProfile = async (req, res) => {
+  console.log('🔄 getProfile invoked for user ID:', req.user.id);
   try {
     const user = await User.findByPk(req.user.id, {
       attributes: ['id', 'username', 'email'],
       include: [{ model: Rol, as: 'UserRol', attributes: ['nombre'] }]
     });
-
     if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      console.log('❌ Usuario no encontrado en getProfile');
+      return res.status(404).json({ status: 'error', message: 'Usuario no encontrado' });
     }
-
+    console.log('✅ Profile data:', user.username);
     res.json({
       id: user.id,
       username: user.username,
       email: user.email,
       role: user.UserRol.nombre
     });
-  } catch (err) {
-    console.error('💥 Error al obtener perfil:', err);
-    res.status(500).json({ error: 'Error en el servidor' });
+  } catch (error) {
+    console.error('💥 Error en getProfile:', error);
+    res.status(500).json({ status: 'error', message: 'Error interno' });
   }
 };
 
 // Registro deshabilitado
 exports.register = (req, res) => {
-  res.status(503).json({
-    error: 'Registro deshabilitado',
-    message: 'Funcionalidad no disponible en este entorno académico.'
-  });
+  console.log('🚫 register invoked');
+  res.status(503).json({ status: 'error', error: 'Registro deshabilitado' });
 };
+
 

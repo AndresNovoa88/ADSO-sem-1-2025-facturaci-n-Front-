@@ -1,4 +1,5 @@
 // backend/scripts/updateAdminPassword.js
+//esto nos sirve para actualizar la contraseña del usuario admin en la base de datos
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { sequelize, User } = require('../models');

@@ -1,3 +1,4 @@
+// src/pages/Auth/ChangePassword.jsx
 import React, { useState } from 'react';
 import { Form, Input, Button, message, Typography, Card } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
@@ -12,13 +13,14 @@ const ChangePassword = () => {
     const { currentPassword, newPassword } = values;
     try {
       setLoading(true);
-      await api.put('/auth/change-password', {
+      const response = await api.put('/auth/change-password', {
         currentPassword,
         newPassword
       });
-      message.success('Contraseña cambiada con éxito');
+      message.success(response.data.message || 'Contraseña cambiada con éxito');
     } catch (error) {
-      message.error(error.response?.data?.message || 'Error al cambiar la contraseña');
+      const errMsg = error.response?.data?.message || 'Error al cambiar la contraseña';
+      message.error(errMsg);
     } finally {
       setLoading(false);
     }

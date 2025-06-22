@@ -56,20 +56,23 @@ exports.changePassword = async (req, res) => {
 
   try {
     const user = await User.findByPk(userId);
-    const isMatch = await user.validPassword(currentPassword);
-
-    if (!isMatch) {
-      return res.status(400).json({ message: "Contraseña actual incorrecta" });
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'Usuario no encontrado' });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
+    // Verificar contraseña actual
+    const isMatch = await user.validPassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ status: 'error', message: 'Contraseña actual incorrecta' });
+    }
 
-    res.json({ message: "Contraseña cambiada exitosamente" });
+    // Asignar nueva contraseña sin hashear manualmente
+    user.password = newPassword;
+    await user.save();  // El hook beforeUpdate la hasheará automáticamente
+
+    return res.json({ status: 'success', message: 'Contraseña cambiada exitosamente' });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error cambiando contraseña", details: error.message });
+    console.error('💥 Error cambiando contraseña:', error);
+    return res.status(500).json({ status: 'error', message: 'Error cambiando contraseña' });
   }
 };

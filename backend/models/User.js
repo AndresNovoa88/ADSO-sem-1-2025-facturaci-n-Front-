@@ -1,15 +1,36 @@
 // backend/models/User.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-const Rol             = require('./Rol');
-const bcrypt          = require('bcryptjs');
+const Rol = require('./Rol');
+const bcrypt = require('bcryptjs');
 
 const User = sequelize.define('User', {
-  username: { type: DataTypes.STRING, allowNull: false, unique: true },
-  password: { type: DataTypes.STRING, allowNull: false },
-  email:    { type: DataTypes.STRING, allowNull: false, unique: true, validate: { isEmail: true } },
-  rol_id:   { type: DataTypes.INTEGER, allowNull: false, references: { model: Rol, key: 'id' } }
+  username: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: { isEmail: true }
+  },
+  rol_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: Rol,
+      key: 'id'
+    }
+  }
 }, {
+  tableName: 'usuarios',      // Alineado con tu tabla real
+  timestamps: false,          // Si tu tabla no tiene createdAt/updatedAt
   hooks: {
     beforeCreate: async (user) => {
       if (user.password) {
@@ -32,3 +53,4 @@ User.prototype.validPassword = async function(password) {
 };
 
 module.exports = User;
+
