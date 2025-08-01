@@ -204,23 +204,30 @@ const FacturaForm = () => {
 
   // Manejar cambio de cantidad
   const handleQuantityChange = (productoId, value) => {
-    if (value <= 0) {
-      handleRemoveItem(productoId);
-      return;
-    }
+  // Si el valor es nulo o indefinido (cuando se borra todo), mantener el valor actual
+  if (value === null || value === undefined) {
+    return;
+  }
+  
+  // Solo eliminar si explícitamente se establece en 0
+  if (value === 0) {
+    handleRemoveItem(productoId);
+    return;
+  }
 
-    setItems(
-      items.map((item) =>
-        item.producto_id === productoId
-          ? {
-              ...item,
-              cantidad: value,
-              subtotal: value * item.precio_unitario,
-            }
-          : item
-      )
-    );
-  };
+  // Actualizar la cantidad normalmente
+  setItems(
+    items.map((item) =>
+      item.producto_id === productoId
+        ? {
+            ...item,
+            cantidad: value,
+            subtotal: value * item.precio_unitario,
+          }
+        : item
+    )
+  );
+};
 
   // Eliminar producto
   const handleRemoveItem = (productoId) => {
@@ -283,20 +290,26 @@ const FacturaForm = () => {
       width: "20%",
     },
     {
-      title: "Cantidad",
-      dataIndex: "cantidad",
-      key: "cantidad",
-      render: (cantidad, record) => (
-        <InputNumber
-          min={1}
-          value={cantidad}
-          onChange={(value) => handleQuantityChange(record.producto_id, value)}
-          style={{ width: "80px" }}
-        />
-      ),
-      align: "center",
-      width: "20%",
-    },
+  title: "Cantidad",
+  dataIndex: "cantidad",
+  key: "cantidad",
+  render: (cantidad, record) => (
+    <InputNumber
+      min={1}
+      value={cantidad}
+      onChange={(value) => handleQuantityChange(record.producto_id, value)}
+      onBlur={(e) => {
+        // Si queda vacío, restaurar valor anterior
+        if (e.target.value === '') {
+          handleQuantityChange(record.producto_id, cantidad);
+        }
+      }}
+      style={{ width: "80px" }}
+    />
+  ),
+  align: "center",
+  width: "20%",
+},
     {
       title: "Subtotal",
       dataIndex: "subtotal",
