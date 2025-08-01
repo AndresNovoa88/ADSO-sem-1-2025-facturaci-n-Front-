@@ -2,7 +2,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
-// Definición del modelo Cliente
 const Cliente = sequelize.define(
   "Cliente",
   {
