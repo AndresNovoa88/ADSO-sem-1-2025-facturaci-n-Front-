@@ -6,6 +6,21 @@ export const fetchFacturas = async () => {
   return response.data;
 };
 
+// Función para buscar facturas por cliente
+export const searchFacturasByCliente = async (searchText) => {
+  const response = await api.get('/facturas/cliente/search', {
+    params: { name: searchText }
+  });
+  return response.data;
+};
+
+// Función para eliminar facturas
+export const deleteFactura = async (id) => {
+  const response = await api.delete(`/facturas/${id}`);
+  return response.data;
+};
+
+// Resto de funciones existentes sin cambios...
 export const createFactura = async (facturaData) => {
   const response = await api.post('/facturas', facturaData);
   return response.data;

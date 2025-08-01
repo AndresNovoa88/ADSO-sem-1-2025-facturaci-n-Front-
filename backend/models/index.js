@@ -31,6 +31,9 @@ DetalleFactura.belongsTo(Factura, { foreignKey: 'factura_id' });
 Producto.hasMany(DetalleFactura, { foreignKey: 'producto_id' });
 DetalleFactura.belongsTo(Producto, { foreignKey: 'producto_id' });
 
+// Relación: vendedor
+
+
 // Prueba de conexión (opcional)
 sequelize.authenticate()
   .then(() => console.log('Conexión a la base de datos exitosa'))

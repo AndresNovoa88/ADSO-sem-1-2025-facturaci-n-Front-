@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const path = require('path');
+const fs = require('fs');
 const { sequelize } = require('./models');
 const authRoutes = require('./routes/authRoutes');
 const facturaRoutes = require('./routes/facturaRoutes');
@@ -13,6 +15,13 @@ const passwordRoutes = require('./routes/passwordRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+//directorio de facturas
+const facturasDir = path.join(__dirname, 'facturas');
+if (!fs.existsSync(facturasDir)){
+  fs.mkdirSync(facturasDir, { recursive: true });
+  console.log(`📂 Directorio de facturas creado: ${facturasDir}`);
+}
 
 // Middlewares
 app.use(morgan('dev'));
@@ -25,6 +34,10 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
+
+//servir archivos PDF estaticos
+app.use('/facturas', express.static(path.join(__dirname, 'facturas')));
+console.log(`📂 Servidor de archivos PDF en: ${path.join(__dirname, 'facturas')}`);
 
 // Rutas
 app.use('/api/auth', authRoutes);

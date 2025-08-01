@@ -42,7 +42,7 @@ const Vendedor = sequelize.define('Vendedor', {
   estado: { type: DataTypes.BOOLEAN, defaultValue: true }
 }, {
   tableName: 'vendedores',
-  timestamps: true 
+  timestamps: false 
 });
 
 module.exports = Vendedor;

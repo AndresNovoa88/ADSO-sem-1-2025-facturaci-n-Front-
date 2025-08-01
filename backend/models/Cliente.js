@@ -19,24 +19,28 @@ const Cliente = sequelize.define(
         notNull: { msg: "El apellido es obligatorio" },
       },
     },
+    identificacion: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     direccion: { type: DataTypes.STRING },
-    telefono: { 
-    type: DataTypes.STRING,
-    validate: {
-      is: {
-        args: /^[0-9+-\s()]{7,15}$/,
-        msg: "Teléfono inválido"
-      }
-    }
-  },
-  email: { 
-    type: DataTypes.STRING, 
-    validate: { 
-      isEmail: {
-        msg: "Debe ser un email válido"
-      } 
-    } 
-  },
+    telefono: {
+      type: DataTypes.STRING,
+      validate: {
+        is: {
+          args: /^[0-9+-\s()]{7,15}$/,
+          msg: "Teléfono inválido",
+        },
+      },
+    },
+    email: {
+      type: DataTypes.STRING,
+      validate: {
+        isEmail: {
+          msg: "Debe ser un email válido",
+        },
+      },
+    },
     estado: { type: DataTypes.BOOLEAN, defaultValue: true },
   },
   {

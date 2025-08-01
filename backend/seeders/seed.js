@@ -6,7 +6,7 @@ const { User } = require('../models');
 
 const runSeed = async () => {
   try {
-    await sequelize.sync({ alter: true }); // Usar alter para conservar datos
+    await sequelize.sync({ alter: true });
 
     await seedRoles();
     await seedUsers();

@@ -1,18 +1,31 @@
 // backend/middlewares/auth.js
-const { secret } = require('../config/config');
 const jwt = require('jsonwebtoken');
+const { secret } = require('../config/config');
 
-// Debe exportar una función middleware
 module.exports = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  // Permitir acceso sin token a archivos PDF (opcional)
+  if (req.path.includes('/pdf/') && !req.headers.authorization) {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
   
-  if (!token) return res.status(401).json({ error: 'Acceso denegado' });
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Token no proporcionado' });
+  }
+
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return res.status(401).json({ error: 'Formato de token inválido' });
+  }
+
+  const token = parts[1];
   
   try {
     const decoded = jwt.verify(token, secret);
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(400).json({ error: 'Token inválido' });
+    res.status(401).json({ error: 'Token inválido' });
   }
 };

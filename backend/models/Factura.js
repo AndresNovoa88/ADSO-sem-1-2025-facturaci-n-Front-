@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
-const Cliente       = require('./Cliente');
-const Vendedor      = require('./Vendedor');
+const Cliente = require('./Cliente');
+const Vendedor = require('./Vendedor');
 
 const Factura = sequelize.define('Factura', {
   codigo:     { type: DataTypes.STRING(20), allowNull: false, unique: true },

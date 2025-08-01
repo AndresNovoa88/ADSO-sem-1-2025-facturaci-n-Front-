@@ -5,15 +5,16 @@ import AuthLayout from "../layouts/AuthLayout";
 import AppLayout from "../layouts/AppLayout";
 import ListClientes from "../pages/Clientes/ListClientes";
 import ListProductos from "../pages/Productos/ListProductos";
-import ChangePassword from '../pages/Auth/ChangePassword';
-
+import ChangePassword from "../pages/Auth/ChangePassword";
 
 // Lazy-load de páginas
 const Login = lazy(() => import("../pages/Auth/Login"));
 const Dashboard = lazy(() => import("../pages/Dashboard/index"));
 const FacturaForm = lazy(() => import("../pages/Facturas/FacturaForm"));
-const ClienteForm = lazy(() => import("../pages/Clientes/ClienteForm")); 
-const ProductoForm = lazy(() => import("../pages/Productos/ProductoForm")); 
+const FacturasList = lazy(() => import("../pages/Facturas/FacturasList"));
+const FacturaDetail = lazy(() => import("../pages/Facturas/FacturaDetail"));
+const ClienteForm = lazy(() => import("../pages/Clientes/ClienteForm"));
+const ProductoForm = lazy(() => import("../pages/Productos/ProductoForm"));
 const ListVendedores = lazy(() => import("../pages/Vendedores/ListVendedores"));
 const VendedorForm = lazy(() => import("../pages/Vendedores/VendedorForm"));
 const NotFound = lazy(() => import("../pages/NotFound"));
@@ -41,6 +42,8 @@ export default function AppRoutes() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/facturas/nueva" element={<FacturaForm />} />
           <Route path="/facturas/editar/:id" element={<FacturaForm />} />
+          <Route path="/facturas" element={<FacturasList />} />
+          <Route path="/facturas/:id" element={<FacturaDetail />} />
 
           {/* Rutas para Clientes */}
           <Route path="/clientes" element={<ListClientes />} />
@@ -57,8 +60,11 @@ export default function AppRoutes() {
           <Route path="/vendedores/nuevo" element={<VendedorForm />} />
           <Route path="/vendedores/editar/:id" element={<VendedorForm />} />
 
-        {/* Ruta para cambiar contraseña */}
-          <Route path="/configuracion/cambiar-contraseña" element={<ChangePassword />} />
+          {/* Ruta para cambiar contraseña */}
+          <Route
+            path="/configuracion/cambiar-contraseña"
+            element={<ChangePassword />}
+          />
         </Route>
 
         {/* Ruta 404 */}
