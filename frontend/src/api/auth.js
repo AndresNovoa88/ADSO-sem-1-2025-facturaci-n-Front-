@@ -12,6 +12,7 @@ const api = axios.create({
 // Recibe { username, password }
 export const login = async (credentials) => {
   const response = await api.post('/auth/login', credentials);
+  console.log('🔎 login response from backend:', response.data);
   return response.data;  // { token, user, message }
 };
 

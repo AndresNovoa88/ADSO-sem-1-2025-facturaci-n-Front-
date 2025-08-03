@@ -10,5 +10,6 @@ router.post('/', authMiddleware, facturaController.createFactura);
 router.put('/:id/anular', authMiddleware, facturaController.anularFactura);
 router.get('/cliente/search', authMiddleware, facturaController.searchFacturasByCliente);
 router.delete('/:id', authMiddleware, facturaController.deleteFactura);
+router.get('/pdf/:codigo', authMiddleware, facturaController.generarPDF);
 
 module.exports = router;

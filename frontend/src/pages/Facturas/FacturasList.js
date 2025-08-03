@@ -139,15 +139,6 @@ const FacturasList = () => {
       return <Text>{vendedor ? `${vendedor.nombre} ${vendedor.apellido}` : 'N/A'}</Text>;
     }
   },
-  {
-    title: 'Creado por',
-    key: 'creador',
-    render: (_, record) => {
-      // Obtener usuario desde la relación
-      const creador = record.User;
-      return <Text>{creador ? creador.username : 'N/A'}</Text>;
-    }
-  },
     {
       title: "Total",
       dataIndex: "total",

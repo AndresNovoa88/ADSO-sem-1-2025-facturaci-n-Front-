@@ -17,6 +17,7 @@ exports.login = async (req, res) => {
       where: { username },
       include: [{ model: Rol, as: 'UserRol', attributes: ['nombre'] }]
     });
+    console.log("Rol asociado:", user.Rol);
 
     if (!user) {
       console.log('❌ Usuario no encontrado');
@@ -38,6 +39,16 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ id: user.id, role: user.UserRol.nombre }, secret, { expiresIn });
     console.log('✅ Login exitoso, token generado');
 
+   console.log("🧾 Enviando respuesta con token y usuario:", {
+  token,
+  user: {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    rol: user.UserRol?.nombre || null
+  }
+});
+
     return res.json({
       status: 'success',
       token,
@@ -45,8 +56,9 @@ exports.login = async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
-        role: user.UserRol.nombre
-      }
+        role: user.UserRol?.nombre || null
+      },
+      message: 'Inicio de sesión exitoso'
     });
   } catch (error) {
     console.error('💥 Error en login:', error);

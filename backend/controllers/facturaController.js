@@ -558,3 +558,51 @@ exports.deleteFactura = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.generarPDF = async (req, res) => {
+  try {
+    const { codigo } = req.params;
+
+    const factura = await Factura.findOne({
+      where: { codigo },
+      include: [
+        { model: Cliente },
+        { model: Vendedor },
+        {
+          model: DetalleFactura,
+          include: [Producto]
+        }
+      ]
+    });
+
+    if (!factura) {
+      return res.status(404).send('Factura no encontrada');
+    }
+
+    const doc = new PDFDocument();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=factura_${codigo}.pdf`);
+    doc.pipe(res);
+
+    doc.fontSize(20).text(`Factura: ${factura.codigo}`, { align: 'center' });
+    doc.moveDown();
+
+    doc.fontSize(12).text(`Fecha: ${factura.fecha}`);
+    doc.text(`Cliente: ${factura.Cliente.nombre} ${factura.Cliente.apellido}`);
+    doc.text(`Vendedor: ${factura.Vendedor.nombre} ${factura.Vendedor.apellido}`);
+    doc.moveDown();
+
+    doc.text('Detalle de productos:');
+    factura.DetalleFacturas.forEach((detalle) => {
+      doc.text(` - ${detalle.Producto.nombre}: ${detalle.cantidad} x $${detalle.precio_unitario}`);
+    });
+
+    doc.moveDown();
+    doc.text(`Subtotal: $${factura.subtotal}`);
+    doc.text(`Impuesto: $${factura.impuesto}`);
+    doc.text(`Total: $${factura.total}`);
+    doc.end();
+  } catch (error) {
+    console.error('Error al generar PDF:', error);
+    res.status(500).send('Error al generar el PDF');
+  }
+};

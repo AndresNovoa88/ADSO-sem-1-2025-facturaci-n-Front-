@@ -97,7 +97,7 @@ const startServer = async () => {
     await sequelize.query("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'");
     
     // Sincronización segura
-    const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: true };
+    const syncOptions = process.env.NODE_ENV === 'production' ? {} : { alter: false };
     console.log(`🔄 Sincronizando modelos con opciones:`, syncOptions);
     await sequelize.sync(syncOptions);
     

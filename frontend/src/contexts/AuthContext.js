@@ -1,3 +1,4 @@
+// frontend/src/contexts/AuthContext.js
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
@@ -55,13 +56,14 @@ export const AuthProvider = ({ children }) => {
   const handleLogin = async (credentials) => {
     try {
       const { token, user } = await apiLogin(credentials);
+      console.log("🧩 handleLogin() recibió:", { token, user });
       
       setAuthToken(token);
       setAuthState({
         user,
         loading: false
       });
-      
+      return { token, user };
       // Se elimina message.success y navigate
     } catch (error) {
       message.error(error.response?.data?.message || 'Error de autenticación');

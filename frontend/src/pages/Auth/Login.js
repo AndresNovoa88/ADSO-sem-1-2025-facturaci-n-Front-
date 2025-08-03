@@ -16,17 +16,25 @@ const Login = () => {
     console.log("🔐 onFinish login with:", values);
     try {
       setLoading(true);
-      const { token, user } = await login({
+      const data = await login({
         username: values.username,
         password: values.password,
       });
+
+      if (!data?.token) {
+        throw new Error("Token no recibido");
+      }
+
+      const { token, user } = data;
       console.log("✅ login response:", { token, user });
       message.success("Bienvenido al sistema");
       navigate("/dashboard");
     } catch (error) {
       console.error("💥 login error:", error.response || error);
       message.error(
-        error.response?.data?.message || "Credenciales incorrectas"
+        error.response?.data?.message ||
+          error.message ||
+          "Credenciales incorrectas"
       );
     } finally {
       setLoading(false);
