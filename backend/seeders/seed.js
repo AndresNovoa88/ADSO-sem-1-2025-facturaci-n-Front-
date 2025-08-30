@@ -1,3 +1,4 @@
+//backend/seeders/seed.js
 const seedRoles = require('./initialRoles');
 const seedUsers = require('./initialUsers');
 const { sequelize } = require('../models');
