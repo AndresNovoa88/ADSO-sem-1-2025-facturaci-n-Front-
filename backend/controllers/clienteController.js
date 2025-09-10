@@ -1,5 +1,6 @@
 const Cliente = require('../models/Cliente');
 const { sequelize } = require('../models');
+const { Op } = require('sequelize');
 
 exports.getAllClientes = async (req, res) => {
   try {
@@ -96,8 +97,11 @@ exports.updateCliente = async (req, res) => {
     // Validar duplicados (excluyendo el actual)
     if (nombre && apellido) {
       const existingName = await Cliente.findOne({ 
-        where: { nombre, apellido },
-        id: { [Op.ne]: id } // Excluir el registro actual
+        where: { 
+          nombre, 
+          apellido,
+          id: { [Op.ne]: id } // Excluir el registro actual
+        }
       });
       
       if (existingName) {
@@ -109,8 +113,10 @@ exports.updateCliente = async (req, res) => {
 
     if (telefono) {
       const existingPhone = await Cliente.findOne({ 
-        where: { telefono },
-        id: { [Op.ne]: id }
+        where: { 
+          telefono,
+          id: { [Op.ne]: id }
+        }
       });
       
       if (existingPhone) {
@@ -122,8 +128,10 @@ exports.updateCliente = async (req, res) => {
 
     if (email) {
       const existingEmail = await Cliente.findOne({ 
-        where: { email },
-        id: { [Op.ne]: id }
+        where: { 
+          email,
+          id: { [Op.ne]: id }
+        }
       });
       
       if (existingEmail) {

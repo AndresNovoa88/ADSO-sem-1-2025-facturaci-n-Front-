@@ -1,4 +1,3 @@
-//backend/controllers/productoController.js
 const { Producto } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../config/db');
@@ -66,7 +65,7 @@ exports.createProducto = async (req, res) => {
     const existente = await Producto.findOne({
       where: sequelize.where(
         sequelize.fn('LOWER', sequelize.col('nombre')), 
-        sequelize.fn('LOWER', nombre)
+        sequelize.fn('LOWER', nombre.trim())
       )
     });
 
@@ -112,48 +111,107 @@ exports.createProducto = async (req, res) => {
 
 exports.updateProducto = async (req, res) => {
   try {
+    console.log('Iniciando actualización de producto', req.params.id, req.body);
+    
     const { id } = req.params;
     const producto = await Producto.findByPk(id);
     
     if (!producto) {
+      console.log('Producto no encontrado', id);
       return res.status(404).json({ message: 'Producto no encontrado' });
     }
     
-    const { nombre } = req.body;
+    const { nombre, precio, stock } = req.body;
+    console.log('Datos recibidos:', { nombre, precio, stock });
 
-    // Validar precio si se actualiza
-    if (req.body.precio !== undefined && parseFloat(req.body.precio) <= 0) {
-      return res.status(400).json({ 
-        message: 'El precio debe ser mayor que cero' 
-      });
+    // Preparar datos para actualización
+    const updateData = {};
+    
+    // Validar y procesar nombre
+    if (nombre !== undefined) {
+      if (!nombre.trim()) {
+        return res.status(400).json({ 
+          message: 'El nombre no puede estar vacío' 
+        });
+      }
+      updateData.nombre = nombre.trim();
     }
 
-    // Verificar duplicados por nombre (excluyendo el actual)
-    if (nombre) {
-      const existente = await Producto.findOne({ 
-        where: { 
-          nombre: { 
-            [Op.iLike]: nombre 
-          },
-          id: { [Op.ne]: id }
-        } 
+    // Validar y procesar precio
+    if (precio !== undefined) {
+      const precioNum = parseFloat(precio);
+      if (isNaN(precioNum) || precioNum <= 0) {
+        console.log('Precio inválido', precio);
+        return res.status(400).json({ 
+          message: 'El precio debe ser un número mayor que cero' 
+        });
+      }
+      updateData.precio = precioNum;
+    }
+
+    // Validar y procesar stock
+    if (stock !== undefined) {
+      const stockInt = parseInt(stock, 10);
+      if (isNaN(stockInt) || stockInt < 0) {
+        console.log('Stock inválido', stock);
+        return res.status(400).json({ 
+          message: 'El stock debe ser un número entero no negativo' 
+        });
+      }
+      updateData.stock = stockInt;
+    }
+
+    // Procesar descripción y categoría
+    if (req.body.descripcion !== undefined) {
+      updateData.descripcion = req.body.descripcion || null;
+    }
+    
+    if (req.body.categoria !== undefined) {
+      updateData.categoria = req.body.categoria || null;
+    }
+
+    // Verificar duplicados por nombre (solo si el nombre está siendo actualizado)
+    if (updateData.nombre) {
+      console.log('Buscando duplicados para:', updateData.nombre);
+      const existente = await Producto.findOne({
+        where: {
+          [Op.and]: [
+            sequelize.where(
+              sequelize.fn('LOWER', sequelize.col('nombre')),
+              sequelize.fn('LOWER', updateData.nombre)
+            ),
+            { id: { [Op.ne]: id } }
+          ]
+        }
       });
       
       if (existente) {
+        console.log('Producto duplicado encontrado', existente.id);
         return res.status(409).json({ 
           message: 'Ya existe otro producto con ese nombre' 
         });
       }
     }
 
-    await producto.update(req.body);
-    res.json(producto);
+    console.log('Actualizando producto con:', updateData);
+    await producto.update(updateData);
+    
+    console.log('Producto actualizado exitosamente');
+    
+    // Obtener el producto actualizado para devolverlo
+    const productoActualizado = await Producto.findByPk(id);
+    res.json(productoActualizado);
   } catch (error) {
+    console.error('Error en updateProducto:', error);
     if (error.name === 'SequelizeValidationError') {
       const messages = error.errors.map(e => e.message);
       return res.status(400).json({ message: messages.join(', ') });
     }
-    res.status(500).json({ message: 'Error al actualizar el producto' });
+    
+    res.status(500).json({ 
+      message: 'Error al actualizar el producto',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -177,4 +235,3 @@ exports.deleteProducto = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-

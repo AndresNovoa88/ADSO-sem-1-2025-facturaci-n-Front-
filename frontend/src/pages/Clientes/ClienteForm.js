@@ -15,7 +15,8 @@ const ClienteForm = () => {
       setIsEditing(true);
       loadClienteData();
     }
-  }, [id]);
+    // eslint-disable-next-line
+  }, [id]); 
 
   const loadClienteData = async () => {
     try {
@@ -74,6 +75,14 @@ const ClienteForm = () => {
   return (
     <Form form={form} onFinish={onFinish} layout="vertical">
       <Form.Item 
+        label="Identificación" 
+        name="identificacion"
+        rules={[{ pattern: /^[0-9A-Za-z-]+$/, message: 'Identificación inválida' }]}
+      >
+        <Input placeholder="Número de identificación" />
+      </Form.Item>
+      
+      <Form.Item 
         label="Nombre" 
         name="nombre"
         rules={[{ required: true, message: 'Nombre es obligatorio' }]}
@@ -106,7 +115,7 @@ const ClienteForm = () => {
       </Form.Item>
       
       <Form.Item label="Dirección" name="direccion">
-        <Input.TextArea />
+        <Input.TextArea rows={3} />
       </Form.Item>
       
       <Button type="primary" htmlType="submit" loading={loading}>
